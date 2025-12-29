@@ -12,3 +12,6 @@ phases:
       - REACT_APP_API_URL=http://localhost:3001 SKIP_PREFLIGHT_CHECK=true npm run build --prefix client
       - echo Rodando testes unitários e de integração...
       - npm test
+      - echo Deploying application...
+      - aws s3 sync ./client/build s3://$S3_BUCKET_NAME
+      - aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DISTRIBUTION_ID --paths "/*"
