@@ -6,7 +6,7 @@ services:
       - 80:8080
     environment:
       DB_USER: postgres
-      DB_PWD: postgres
-      DB_HOST: database
+      DB_PWD: juniorformacao83
+      DB_HOST: bia.c4nckw8qytev.us-east-1.rds.amazonaws.comdatabase
       DB_PORT: 5432
       
