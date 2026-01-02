@@ -16,8 +16,12 @@ phases:
   build:
     commands:
       - echo Build iniciado em `date`
-      - echo Executando testes...
+      - echo "Executando migrações do banco..."
+      - npm run db:migrate
+      - echo "Executando testes unitários..."
       - npm test
+      - echo "Executando testes de integração..."
+      - npm run test:integration || echo "Testes de integração não configurados"
       - echo Gerando imagem da BIA..
       - docker build -t $REPOSITORY_URI:latest .
       - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG

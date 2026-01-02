@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "jest tests/unit",
+    "test:integration": "jest tests/integration",
     "start": "node server",
     "db:test": "node scripts/test-db-connection.js",
     "db:migrate": "npx sequelize-cli db:migrate"
