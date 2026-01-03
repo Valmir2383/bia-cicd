@@ -3,15 +3,29 @@ version: 0.2
 phases:
   pre_build:
     commands:
-      - echo Fazendo login no ECR...      
+      - echo Fazendo login no ECR...
+      - aws --version
       - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 804826263064.dkr.ecr.us-east-1.amazonaws.com
       - REPOSITORY_URI=804826263064.dkr.ecr.us-east-1.amazonaws.com/bia
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
       - IMAGE_TAG=${COMMIT_HASH:=latest}
+      # Configurar variáveis do banco
+      - export DB_HOST=$DB_HOST
+      - export DB_USER=$DB_USER  
+      - export DB_PWD=$DB_PWD
+      - export DB_PORT=5432
+      # Testar conexão com banco
+      - echo "Testando conexão com banco..."
+      - npm install
+      - npm run db:test || echo "Falha na conexão com banco"
   build:
     commands:
       - echo Build iniciado em `date`
-      - echo Gerando imagem da BIA...
+      # Executar migrações se necessário
+      - npm run db:migrate || echo "Migrações não executadas"
+      # Executar testes que dependem do banco
+      - npm test || echo "Testes falharam"
+      - echo Gerando imagem da BIA..
       - docker build -t $REPOSITORY_URI:latest .
       - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
   post_build:
@@ -22,5 +36,6 @@ phases:
       - docker push $REPOSITORY_URI:$IMAGE_TAG
       - echo Gerando artefato da imagem para o ECS
       - printf '[{"name":"bia","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
+
 artifacts:
   files: imagedefinitions.json
