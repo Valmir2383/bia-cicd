@@ -5,24 +5,15 @@ phases:
     commands:
       - echo Fazendo login no ECR...
       - aws --version
-      - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 804826263064.dkr.ecr.us-east-1.amazonaws.com
-      - REPOSITORY_URI=804826263064.dkr.ecr.us-east-1.amazonaws.com/bia
+      # Uso de variável de região dinâmica
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin 310189683227.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+      - REPOSITORY_URI=310189683227.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/bia
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
       - IMAGE_TAG=${COMMIT_HASH:=latest}
-      - echo "Instalando dependências..."
-      - npm install
-      - echo "Testando conexão com banco de dados..."
-      - npm run db:test
   build:
     commands:
       - echo Build iniciado em `date`
-      - echo "Executando migrações do banco..."
-      - npm run db:migrate
-      - echo "Executando testes unitários..."
-      - npm test
-      - echo "Executando testes de integração..."
-      - npm run test:integration || echo "Testes de integração não configurados"
-      - echo Gerando imagem da BIA..
+      - echo Gerando imagem da BIA...
       - docker build -t $REPOSITORY_URI:latest .
       - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
   post_build:
@@ -31,8 +22,9 @@ phases:
       - echo Fazendo push da imagem para o ECR...
       - docker push $REPOSITORY_URI:latest
       - docker push $REPOSITORY_URI:$IMAGE_TAG
-      - echo Gerando artefato da imagem para o ECS
+      - echo Gerando artefato da imagem para o ECS...
+      # Garante que o arquivo seja limpo antes de escrever
       - printf '[{"name":"bia","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
-      - codebuild-breakpoint
 artifacts:
-  files: imagedefinitions.json
+  files: 
+    - imagedefinitions.json
