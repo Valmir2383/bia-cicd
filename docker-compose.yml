@@ -7,6 +7,10 @@ services:
     environment:
       DB_USER: postgres
       DB_PWD: juniorformacao83
+<<<<<<< HEAD
+      DB_HOST: bia.c4nckw8qytev.us-east-1.rds.amazonaws.comdatabase
+=======
       DB_HOST: bia.c4nckw8qytev.us-east-1.rds.amazonaws.com
+>>>>>>> pr-cicd
       DB_PORT: 5432
       
