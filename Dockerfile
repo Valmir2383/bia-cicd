@@ -1,24 +1,27 @@
-FROM node:18-slim
+FROM node:16-slim
 
 WORKDIR /usr/src/app
 
-# Copiar e instalar dependências do backend primeiro
+# Primeiro, buildar o frontend em um diretório isolado
+COPY client/ ./client/
+RUN cd client && npm install && SKIP_PREFLIGHT_CHECK=true npm run build
+
+# Agora instalar backend
 COPY package*.json ./
-RUN npm install --loglevel=error
+RUN npm install
 
-# Copiar e buildar o frontend
-COPY client/package*.json ./client/
-RUN cd client && npm install --loglevel=error
+# Copiar resto do código (exceto client)
+COPY api/ ./api/
+COPY config/ ./config/
+COPY database/ ./database/
+COPY lib/ ./lib/
+COPY scripts/ ./scripts/
+COPY server.js ./
+COPY .sequelizerc ./
 
-# Copiar código fonte
-COPY . .
-
-# Buildar o React com Node.js 18 (compatível)
-RUN cd client && REACT_APP_API_URL=http://localhost:3001 SKIP_PREFLIGHT_CHECK=true npm run build
-
-# Mover build para local correto
-RUN mv client/build client_build && rm -rf client && mkdir client && mv client_build client/build
+# Mover build do React para local correto
+RUN rm -rf client/src client/public client/package*.json client/node_modules
 
 EXPOSE 8080
 
-CMD [ "npm", "start" ]
+CMD ["npm", "start"]
