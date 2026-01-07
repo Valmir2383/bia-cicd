@@ -4,7 +4,7 @@ WORKDIR /usr/src/app
 
 # Primeiro, buildar o frontend em um diretório isolado
 COPY client/ ./client/
-RUN cd client && npm install && SKIP_PREFLIGHT_CHECK=true npm run build
+RUN cd client && npm install && node --openssl-legacy-provider node_modules/.bin/react-scripts build
 
 # Agora instalar backend
 COPY package*.json ./
