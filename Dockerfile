@@ -1,27 +1,24 @@
-FROM node:16-slim
+FROM node:24-slim
 
 WORKDIR /usr/src/app
 
-# Primeiro, buildar o frontend em um diretório isolado
-COPY client/ ./client/
-RUN cd client && npm install && node --openssl-legacy-provider node_modules/.bin/react-scripts build
-
-# Agora instalar backend
+# Copiar e instalar dependências do backend primeiro
 COPY package*.json ./
-RUN npm install
+RUN npm install --loglevel=error
 
-# Copiar resto do código (exceto client)
-COPY api/ ./api/
-COPY config/ ./config/
-COPY database/ ./database/
-COPY lib/ ./lib/
-COPY scripts/ ./scripts/
-COPY server.js ./
-COPY .sequelizerc ./
+# Copiar e buildar o frontend
+COPY client/package*.json ./client/
+RUN cd client && npm install --loglevel=error
 
-# Mover build do React para local correto
-RUN rm -rf client/src client/public client/package*.json client/node_modules
+# Copiar código fonte
+COPY . .
+
+# Buildar o React com Node.js 24
+RUN cd client && REACT_APP_API_URL=http://localhost:3001 SKIP_PREFLIGHT_CHECK=true npm run build
+
+# Mover build para local correto
+RUN mv client/build client_build && rm -rf client && mkdir client && mv client_build client/build
 
 EXPOSE 8080
 
-CMD ["npm", "start"]
+CMD [ "npm", "start" ]
