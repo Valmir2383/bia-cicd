@@ -18,4 +18,4 @@ npm start           # Iniciar aplicação
 ```
 
 ## Status
-Pipeline testado em: 2026-01-08 18:14 - Teste GitHub source
+Pipeline testado em: 2026-01-08 18:56 - Teste final buildspec corrigido
