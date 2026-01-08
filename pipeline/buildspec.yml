@@ -1,28 +1,49 @@
 version: 0.2
 
+env:
+  secrets-manager:
+    DB_USER: "arn:aws:secretsmanager:us-east-1:804826263064:secret:rds!db-2e2b930b-62af-4b19-82ad-6d67abd06746-E9UzKs:username"
+    DB_PASS: "arn:aws:secretsmanager:us-east-1:804826263064:secret:rds!db-2e2b930b-62af-4b19-82ad-6d67abd06746-E9UzKs:password"
+    DB_HOST: "arn:aws:secretsmanager:us-east-1:804826263064:secret:rds!db-2e2b930b-62af-4b19-82ad-6d67abd06746-E9UzKs:host"
+    DB_NAME: "arn:aws:secretsmanager:us-east-1:804826263064:secret:rds!db-2e2b930b-62af-4b19-82ad-6d67abd06746-E9UzKs:dbname"
+
 phases:
+  install:
+    runtime-versions:
+      nodejs: 20
+    commands:
+      - echo ">>> INSTALANDO DEPENDÊNCIAS <<<"
+      - npm install
   pre_build:
     commands:
-      - echo Fazendo login no ECR...
-      - aws --version
+      - echo "==============================================="
+      - echo "      ETAPA 1: TESTES UNITÁRIOS (JEST)         "
+      - echo "==============================================="
+      - npx jest tests/unit/controllers/versao.test.js
+      - echo ">>> Login no ECR e preparação de Tags <<<"
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin 804826263064.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
       - REPOSITORY_URI=804826263064.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/bia
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
       - IMAGE_TAG=${COMMIT_HASH:=latest}
   build:
     commands:
-      - echo Build iniciado em `date`
-      - echo Gerando imagem da BIA...
+      - echo "==============================================="
+      - echo "      ETAPA 2: MIGRATIONS NO BANCO (RDS)       "
+      - echo "==============================================="
+      - npm run migrate
+      - echo "==============================================="
+      - echo "      ETAPA 3: CONSTRUÇÃO DA IMAGEM DOCKER     "
+      - echo "==============================================="
+      - echo "Build iniciado em `date`"
       - docker build -t $REPOSITORY_URI:latest .
       - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
   post_build:
     commands:
-      - echo Build finalizado com sucesso em `date`
-      - echo Fazendo push da imagem para o ECR...
+      - echo ">>> Fazendo push das imagens e gerando artefatos <<<"
       - docker push $REPOSITORY_URI:latest
       - docker push $REPOSITORY_URI:$IMAGE_TAG
-      - echo Gerando artefato da imagem para o ECS...
-      - printf '[{"name":"bia","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
+      - printf '[{"name":"bia-container","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
+
 artifacts:
   files: 
     - imagedefinitions.json
