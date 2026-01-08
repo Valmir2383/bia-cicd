@@ -13,7 +13,8 @@ RUN cd client && npm install --loglevel=error
 
 # Copiar código fonte
 COPY . .
-
+ENV NODE_OPTIONS=--openssl-legacy-provider
+RUN cd client && npm run build
 # Buildar o React com configurações do .env
 RUN cd client && npm run build
 
