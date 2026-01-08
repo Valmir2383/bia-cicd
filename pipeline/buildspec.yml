@@ -8,7 +8,7 @@ env:
   variables:
     # Endpoint e Nome do Banco (identificados no console do RDS)
     DB_HOST: "bia-db.c4nckw8qytev.us-east-1.rds.amazonaws.com"
-    DB_NAME: "bia"
+    DB_NAME: "postgres"
 
 phases:
   install:
