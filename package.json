@@ -8,7 +8,7 @@
     "test:integration": "jest tests/integration",
     "start": "node server",
     "db:test": "node scripts/test-db-connection.js",
-    "migrate": "npx sequelize-cli db:migrate",
+    "db:migrate": "npx sequelize-cli db:migrate",
     "migrate:undo": "npx sequelize-cli db:migrate:undo"
   },
   "repository": {
@@ -22,7 +22,7 @@
   },
   "homepage": "https://github.com/valmir2383/bia#readme",
   "dependencies": {
-    "aws-sdk": "^2.1691.0",
+    "@aws-sdk/client-secrets-manager": "^3.0.0",
     "config": "^3.3.6",
     "cors": "^2.8.5",
     "express": "^4.17.1",

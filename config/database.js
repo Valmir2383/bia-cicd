@@ -1,4 +1,4 @@
-const AWS = require('aws-sdk');
+const { SecretsManagerClient, GetSecretValueCommand } = require('@aws-sdk/client-secrets-manager');
 
 let dbConfig = null;
 
@@ -21,10 +21,10 @@ async function getDbConfig() {
 
   // Em produção, usar Secrets Manager
   try {
-    const secretsManager = new AWS.SecretsManager({ region: 'us-east-1' });
-    const secret = await secretsManager.getSecretValue({ 
-      SecretId: 'bia/database/credentials' 
-    }).promise();
+    const client = new SecretsManagerClient({ region: 'us-east-1' });
+    const secretName = process.env.DB_SECRET_NAME || 'bia/database/credentials';
+    const command = new GetSecretValueCommand({ SecretId: secretName });
+    const secret = await client.send(command);
     
     const credentials = JSON.parse(secret.SecretString);
     
@@ -62,7 +62,7 @@ function getRemoteDialectOptions() {
   return {
     ssl: {
       require: true,
-      rejectUnauthorized: false,
+      rejectUnauthorized: true,
     },
   };
 }

@@ -2,32 +2,33 @@ version: 0.2
 
 env:
   secrets-manager:
-    DB_USER: "arn:aws:secretsmanager:us-east-1:804826263064:secret:rds!db-2e2b930b-62af-4b19-82ad-6d67abd06746-E9UzKs:username"
-    DB_PASS: "arn:aws:secretsmanager:us-east-1:804826263064:secret:rds!db-2e2b930b-62af-4b19-82ad-6d67abd06746-E9UzKs:password"
+    DB_USER: "arn:aws:secretsmanager:$AWS_DEFAULT_REGION:$AWS_ACCOUNT_ID:secret:$DB_SECRET_NAME:username"
+    DB_PWD: "arn:aws:secretsmanager:$AWS_DEFAULT_REGION:$AWS_ACCOUNT_ID:secret:$DB_SECRET_NAME:password"
   variables:
     DB_HOST: "bia-db.c4nckw8qytev.us-east-1.rds.amazonaws.com"
     DB_NAME: "postgres"
+    DB_SECRET_NAME: "rds!db-2e2b930b-62af-4b19-82ad-6d67abd06746-E9UzKs"
 
 phases:
   install:
     runtime-versions:
-      nodejs: 20
+      nodejs: 22
     commands:
       - echo "Instalando dependencias"
       - npm install
   pre_build:
     commands:
       - echo "Etapa 1 - Testes Unitarios"
-      - npx jest tests/unit/controllers/versao.test.js
+      - npm test
       - echo "Login no ECR"
-      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin 804826263064.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
-      - REPOSITORY_URI="804826263064.dkr.ecr.us-east-1.amazonaws.com/bia"
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+      - REPOSITORY_URI="$AWS_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/bia"
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
       - IMAGE_TAG=${COMMIT_HASH:-latest}
   build:
     commands:
       - echo "Etapa 2 - Migrations"
-      - npm run migrate
+      - npm run db:migrate
       - echo "Etapa 3 - Docker Build"
       - docker build -t $REPOSITORY_URI:latest .
       - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
