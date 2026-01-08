@@ -2,11 +2,9 @@ version: 0.2
 
 env:
   secrets-manager:
-    # Somente as chaves que confirmamos no console do Secrets Manager
     DB_USER: "arn:aws:secretsmanager:us-east-1:804826263064:secret:rds!db-2e2b930b-62af-4b19-82ad-6d67abd06746-E9UzKs:username"
     DB_PASS: "arn:aws:secretsmanager:us-east-1:804826263064:secret:rds!db-2e2b930b-62af-4b19-82ad-6d67abd06746-E9UzKs:password"
   variables:
-    # Endpoint e Nome do Banco (identificados no console do RDS)
     DB_HOST: "bia-db.c4nckw8qytev.us-east-1.rds.amazonaws.com"
     DB_NAME: "postgres"
 
@@ -15,33 +13,30 @@ phases:
     runtime-versions:
       nodejs: 20
     commands:
-      - echo "Instalando dependências..."
+      - echo "Instalando dependencias"
       - npm install
   pre_build:
     commands:
-      - echo "==============================================="
-      - echo "      ETAPA 1: TESTES UNITÁRIOS (JEST)         "
-      - echo "==============================================="
+      - echo "Etapa 1 - Testes Unitarios"
       - npx jest tests/unit/controllers/versao.test.js
-      - echo "Fazendo login no ECR..."
+      - echo "Login no ECR"
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin 804826263064.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
-      - REPOSITORY_URI=804826263064.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/bia
+      - REPOSITORY_URI="804826263064.dkr.ecr.us-east-1.amazonaws.com/bia"
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
-      - IMAGE_TAG=${COMMIT_HASH:=latest}
+      - IMAGE_TAG=${COMMIT_HASH:-latest}
   build:
     commands:
-      - echo "==============================================="
-      - echo "      ETAPA 2: MIGRATIONS NO BANCO (RDS)       "
-      - echo "==============================================="
+      - echo "Etapa 2 - Migrations"
       - npm run migrate
-      - echo "Build iniciado em $(date)"
+      - echo "Etapa 3 - Docker Build"
       - docker build -t $REPOSITORY_URI:latest .
       - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
   post_build:
     commands:
-      - echo "Fazendo push das imagens e gerando artefatos..."
+      - echo "Push da imagem"
       - docker push $REPOSITORY_URI:latest
       - docker push $REPOSITORY_URI:$IMAGE_TAG
+      - echo "Gerando imagedefinitions"
       - printf '[{"name":"bia-container","imageUri":"%s"}]' "$REPOSITORY_URI:$IMAGE_TAG" > imagedefinitions.json
 
 artifacts:
