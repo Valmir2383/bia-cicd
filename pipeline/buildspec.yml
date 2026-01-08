@@ -2,10 +2,13 @@ version: 0.2
 
 env:
   secrets-manager:
+    # Somente as chaves que confirmamos no console do Secrets Manager
     DB_USER: "arn:aws:secretsmanager:us-east-1:804826263064:secret:rds!db-2e2b930b-62af-4b19-82ad-6d67abd06746-E9UzKs:username"
     DB_PASS: "arn:aws:secretsmanager:us-east-1:804826263064:secret:rds!db-2e2b930b-62af-4b19-82ad-6d67abd06746-E9UzKs:password"
-    DB_HOST: "arn:aws:secretsmanager:us-east-1:804826263064:secret:rds!db-2e2b930b-62af-4b19-82ad-6d67abd06746-E9UzKs:host"
-    DB_NAME: "arn:aws:secretsmanager:us-east-1:804826263064:secret:rds!db-2e2b930b-62af-4b19-82ad-6d67abd06746-E9UzKs:dbname"
+  variables:
+    # Endpoint e Nome do Banco (identificados no console do RDS)
+    DB_HOST: "bia-db.c4nckw8qytev.us-east-1.rds.amazonaws.com"
+    DB_NAME: "bia"
 
 phases:
   install:
@@ -16,7 +19,9 @@ phases:
       - npm install
   pre_build:
     commands:
-      - echo "Rodando Testes Unitários..."
+      - echo "==============================================="
+      - echo "      ETAPA 1: TESTES UNITÁRIOS (JEST)         "
+      - echo "==============================================="
       - npx jest tests/unit/controllers/versao.test.js
       - echo "Fazendo login no ECR..."
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin 804826263064.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
@@ -25,17 +30,18 @@ phases:
       - IMAGE_TAG=${COMMIT_HASH:=latest}
   build:
     commands:
-      - echo "Iniciando Migrations no bia-db..."
+      - echo "==============================================="
+      - echo "      ETAPA 2: MIGRATIONS NO BANCO (RDS)       "
+      - echo "==============================================="
       - npm run migrate
       - echo "Build iniciado em $(date)"
       - docker build -t $REPOSITORY_URI:latest .
       - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
   post_build:
     commands:
-      - echo "Fazendo push das imagens..."
+      - echo "Fazendo push das imagens e gerando artefatos..."
       - docker push $REPOSITORY_URI:latest
       - docker push $REPOSITORY_URI:$IMAGE_TAG
-      - echo "Gerando imagedefinitions.json..."
       - printf '[{"name":"bia-container","imageUri":"%s"}]' "$REPOSITORY_URI:$IMAGE_TAG" > imagedefinitions.json
 
 artifacts:
