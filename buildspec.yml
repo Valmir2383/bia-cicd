@@ -1,11 +1,24 @@
 version: 0.2
 
+env:
+  variables:
+    AWS_DEFAULT_REGION: us-east-1
+    AWS_ACCOUNT_ID: 804826263064
+
 phases:
   pre_build:
     commands:
-      - echo Fazendo login no ECR...      
-      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin 804826263064.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
-      - REPOSITORY_URI=804826263064.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/bia
+      - echo Fazendo login no ECR...
+      - echo "Region: $AWS_DEFAULT_REGION"
+      - echo "Account: $AWS_ACCOUNT_ID"
+      - |
+        # Verificar se o repositório ECR existe
+        if ! aws ecr describe-repositories --repository-names bia --region $AWS_DEFAULT_REGION 2>/dev/null; then
+          echo "Criando repositório ECR..."
+          aws ecr create-repository --repository-name bia --region $AWS_DEFAULT_REGION
+        fi
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+      - REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/bia
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
       - IMAGE_TAG=${COMMIT_HASH:=latest}
   build:
