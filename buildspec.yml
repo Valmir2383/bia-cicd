@@ -7,19 +7,14 @@ env:
 
 version: 0.2
 
-env:
-  variables:
-    AWS_DEFAULT_REGION: us-east-1
-    AWS_ACCOUNT_ID: 804826263064
-
 phases:
   pre_build:
     commands:
-      - echo "=== DEBUG INFO ==="
+      - echo "=== OBTENDO INFORMAÇÕES AWS ==="
+      - AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-us-east-1}
       - echo "AWS_DEFAULT_REGION: $AWS_DEFAULT_REGION"
-      - echo "AWS_ACCOUNT_ID: $AWS_ACCOUNT_ID" 
-      - echo "CODEBUILD_BUILD_ARN: $CODEBUILD_BUILD_ARN"
-      - aws sts get-caller-identity
+      - echo "AWS_ACCOUNT_ID: $AWS_ACCOUNT_ID"
       - echo "=== VERIFICANDO ECR ==="
       - |
         # Verificar se o repositório ECR existe

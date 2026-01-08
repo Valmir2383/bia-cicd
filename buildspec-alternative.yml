@@ -1,0 +1,57 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo "=== DEBUG INFO ==="
+      - echo "AWS_DEFAULT_REGION: $AWS_DEFAULT_REGION"
+      - echo "AWS_ACCOUNT_ID: $AWS_ACCOUNT_ID" 
+      - aws sts get-caller-identity
+      - echo "=== VERIFICANDO ECR ==="
+      - |
+        # Usar variáveis do CodeBuild se disponíveis
+        REGION=${AWS_DEFAULT_REGION:-us-east-1}
+        ACCOUNT=${AWS_ACCOUNT_ID:-$(aws sts get-caller-identity --query Account --output text)}
+        echo "Using REGION: $REGION"
+        echo "Using ACCOUNT: $ACCOUNT"
+        
+        # Verificar se o repositório ECR existe
+        if ! aws ecr describe-repositories --repository-names bia --region $REGION 2>/dev/null; then
+          echo "Criando repositório ECR..."
+          aws ecr create-repository --repository-name bia --region $REGION
+        else
+          echo "Repositório ECR já existe"
+        fi
+        
+        # Login no ECR com tratamento de erro
+        echo "Fazendo login no ECR..."
+        if aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin $ACCOUNT.dkr.ecr.$REGION.amazonaws.com; then
+          echo "Login ECR realizado com sucesso"
+        else
+          echo "Erro no login ECR, tentando método alternativo..."
+          $(aws ecr get-login --no-include-email --region $REGION)
+        fi
+        
+        # Definir variáveis
+        export REPOSITORY_URI=$ACCOUNT.dkr.ecr.$REGION.amazonaws.com/bia
+        export COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+        export IMAGE_TAG=${COMMIT_HASH:=latest}
+        
+        echo "REPOSITORY_URI: $REPOSITORY_URI"
+        echo "IMAGE_TAG: $IMAGE_TAG"
+  build:
+    commands:
+      - echo Build iniciado em `date`
+      - echo Gerando imagem da BIA...
+      - docker build -t $REPOSITORY_URI:latest .
+      - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
+  post_build:
+    commands:
+      - echo Build finalizado com sucesso em `date`
+      - echo Fazendo push da imagem para o ECR...
+      - docker push $REPOSITORY_URI:latest
+      - docker push $REPOSITORY_URI:$IMAGE_TAG
+      - echo Gerando artefato da imagem para o ECS
+      - printf '[{"name":"bia","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
+artifacts:
+  files: imagedefinitions.json
