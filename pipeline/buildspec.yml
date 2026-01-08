@@ -32,7 +32,7 @@ phases:
           echo "Criando repositório ECR..."
           aws ecr create-repository --repository-name bia --region $AWS_DEFAULT_REGION
         else
-          echo "Repositório ECR já existe"
+          echo "Repositório ECR já existe sim"
         fi
       - echo "=== FAZENDO LOGIN ECR ==="
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
