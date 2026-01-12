@@ -2,15 +2,42 @@ version: 0.2
 
 phases:
   install:
+    runtime-versions:
+      nodejs: 22
     commands:
-      - echo Installing Node 24 e npm...
-      - curl -fsSL https://rpm.nodesource.com/setup_24.x | sudo bash -
-      - sudo yum install -y nodejs
+      - npm install
+  pre_build:
+    commands:
+      - AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-us-east-1}
+      - DB_SECRET_ARN="arn:aws:secretsmanager:us-east-1:804826263064:secret:rds!db-2e2b930b-62af-4b19-82ad-6d67abd06746-E9UzKs"
+      - export DB_HOST="bia-db.c4nckw8qytev.us-east-1.rds.amazonaws.com"
+      - export DB_NAME="postgres"
+      - export DB_USER=$(aws secretsmanager get-secret-value --secret-id "$DB_SECRET_ARN" --query 'SecretString' --output text | jq -r '.username')
+      - export DB_PWD=$(aws secretsmanager get-secret-value --secret-id "$DB_SECRET_ARN" --query 'SecretString' --output text | jq -r '.password')
+      - aws ecr describe-repositories --repository-names bia --region $AWS_DEFAULT_REGION 2>/dev/null || aws ecr create-repository --repository-name bia --region $AWS_DEFAULT_REGION
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+      - REPOSITORY_URI="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/bia"
+      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+      - IMAGE_TAG=${COMMIT_HASH:-latest}
   build:
     commands:
-      - npm install --loglevel=error
-      - REACT_APP_API_URL=http://localhost:3001 SKIP_PREFLIGHT_CHECK=true npm run build --prefix client
-      - echo Rodando testes unitários e de integração...
+      - echo "=== TESTANDO CONEXÃO DB ==="
+      - npm run db:test
+      - echo "=== EXECUTANDO MIGRATIONS ==="
+      - npm run db:migrate
+      - echo "=== EXECUTANDO TESTES ==="
       - npm test
-      - echo "# trigger build" >> pipeline/buildspec-pr.yml    
+      - npm run test:integration
+      - echo "=== CONSTRUINDO IMAGEM ==="
+      - docker build -t $REPOSITORY_URI:latest .
+      - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
+  post_build:
+    commands:
+      - docker push $REPOSITORY_URI:latest
+      - docker push $REPOSITORY_URI:$IMAGE_TAG
+      - printf '[{"name":"bia-container","imageUri":"%s"}]' "$REPOSITORY_URI:$IMAGE_TAG" > imagedefinitions.json
 
+artifacts:
+  files:
+    - imagedefinitions.json
