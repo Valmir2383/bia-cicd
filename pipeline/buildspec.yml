@@ -33,16 +33,19 @@ phases:
       - echo "✅ Setup do pipeline concluído"
   build:
     commands:
-      - echo "=== ETAPA 1: MIGRATIONS ==="
+      - echo "=== TESTANDO CONEXÃO DB ==="
+      - npm run db:test
+      - echo "✅ Conexão com banco confirmada"
+      - echo "=== EXECUTANDO MIGRATIONS ==="
       - npm run db:migrate
       - echo "✅ Migrations executadas com sucesso"
-      - echo "=== ETAPA 2: TESTES UNITÁRIOS ==="
+      - echo "=== EXECUTANDO TESTES UNITÁRIOS ==="
       - npm test
       - echo "✅ Testes unitários aprovados"
-      - echo "=== ETAPA 3: TESTES DE INTEGRAÇÃO ==="
+      - echo "=== EXECUTANDO TESTES DE INTEGRAÇÃO ==="
       - npm run test:integration
       - echo "✅ Testes de integração aprovados"
-      - echo "=== ETAPA 4: BUILD DA APLICAÇÃO ==="
+      - echo "=== CONSTRUINDO IMAGEM ==="
       - docker build -t $REPOSITORY_URI:latest .
       - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
       - echo "✅ Build da aplicação concluído"
