@@ -48,12 +48,12 @@ async function getDbConfig() {
 module.exports = getDbConfig;
 
 function isLocalConnection() {
-  // Lógica para determinar se a conexão é local
+  // Usar variáveis de ambiente quando DB_HOST está definido (CodeBuild)
+  // Usar Secrets Manager apenas quando não há variáveis de ambiente
   return (
-    process.env.DB_HOST === undefined ||
-    process.env.DB_HOST === "database" ||
-    process.env.DB_HOST === "127.0.0.1" ||
-    process.env.DB_HOST === "localhost"
+    process.env.DB_HOST !== undefined &&
+    process.env.DB_USER !== undefined &&
+    process.env.DB_PWD !== undefined
   );
 }
 
