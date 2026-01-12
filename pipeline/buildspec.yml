@@ -57,5 +57,5 @@ phases:
       - echo "✅ Artefatos gerados"
 
 artifacts:
-  files: 
+  files:
     - imagedefinitions.json
