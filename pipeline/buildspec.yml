@@ -22,14 +22,7 @@ phases:
       - export DB_PWD=$(aws secretsmanager get-secret-value --secret-id "$DB_SECRET_ARN" --query 'SecretString' --output text | jq -r '.password')
       - echo "✅ Secrets configurados com sucesso"
       - echo "=== VERIFICANDO ECR ==="
-      - |
-        # Verificar se o repositório ECR existe
-        if ! aws ecr describe-repositories --repository-names bia --region $AWS_DEFAULT_REGION 2>/dev/null; then
-          echo "Criando repositório ECR..."
-          aws ecr create-repository --repository-name bia --region $AWS_DEFAULT_REGION
-        else
-          echo "Repositório ECR já existe"
-        fi
+      - aws ecr describe-repositories --repository-names bia --region $AWS_DEFAULT_REGION 2>/dev/null || aws ecr create-repository --repository-name bia --region $AWS_DEFAULT_REGION
       - echo "=== FAZENDO LOGIN ECR ==="
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
       - REPOSITORY_URI="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/bia"
