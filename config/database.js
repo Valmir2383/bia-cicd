@@ -14,7 +14,7 @@ async function getDbConfig() {
       host: process.env.DB_HOST || "127.0.0.1",
       port: process.env.DB_PORT || 5433,
       dialect: "postgres",
-      dialectOptions: {}
+      dialectOptions: getRemoteDialectOptions()
     };
     return dbConfig;
   }
