@@ -1,35 +1,4 @@
-<<<<<<< HEAD
-module.exports = {
-  development: {
-    username: process.env.DB_USER || "postgres",
-    password: process.env.DB_PASSWORD || "postgres",
-    database: process.env.DB_NAME || "bia_dev",
-    host: process.env.DB_HOST || "127.0.0.1",
-    port: process.env.DB_PORT || 5433,
-    dialect: "postgres",
-    dialectOptions: isLocalConnection() ? {} : getRemoteDialectOptions(),
-  },
-  test: {
-    username: process.env.DB_USER || "postgres",
-    password: process.env.DB_PASSWORD || "postgres",
-    database: process.env.DB_NAME || "bia_test",
-    host: process.env.DB_HOST || "127.0.0.1",
-    port: process.env.DB_PORT || 5433,
-    dialect: "postgres",
-    dialectOptions: isLocalConnection() ? {} : getRemoteDialectOptions(),
-  },
-  production: {
-    username: process.env.DB_USER || "postgres",
-    password: process.env.DB_PASSWORD || "postgres",
-    database: process.env.DB_NAME || "bia",
-    host: process.env.DB_HOST || "127.0.0.1",
-    port: process.env.DB_PORT || 5433,
-    dialect: "postgres",
-    dialectOptions: isLocalConnection() ? {} : getRemoteDialectOptions(),
-  }
-};
-=======
-const AWS = require('aws-sdk');
+const { SecretsManagerClient, GetSecretValueCommand } = require('@aws-sdk/client-secrets-manager');
 
 let dbConfig = null;
 
@@ -52,10 +21,10 @@ async function getDbConfig() {
 
   // Em produção, usar Secrets Manager
   try {
-    const secretsManager = new AWS.SecretsManager({ region: 'us-east-1' });
-    const secret = await secretsManager.getSecretValue({ 
-      SecretId: 'bia/database/credentials' 
-    }).promise();
+    const client = new SecretsManagerClient({ region: 'us-east-1' });
+    const secretName = process.env.DB_SECRET_NAME || 'bia/database/credentials';
+    const command = new GetSecretValueCommand({ SecretId: secretName });
+    const secret = await client.send(command);
     
     const credentials = JSON.parse(secret.SecretString);
     
@@ -77,7 +46,6 @@ async function getDbConfig() {
 }
 
 module.exports = getDbConfig;
->>>>>>> pr-cicd
 
 function isLocalConnection() {
   // Lógica para determinar se a conexão é local
@@ -94,7 +62,7 @@ function getRemoteDialectOptions() {
   return {
     ssl: {
       require: true,
-      rejectUnauthorized: false,
+      rejectUnauthorized: false, // Permite certificados auto-assinados
     },
   };
 }

@@ -16,3 +16,6 @@ npm run db:test     # Testar conexão com banco
 npm run db:migrate  # Executar migrações
 npm start           # Iniciar aplicação
 ```
+
+## Status
+Pipeline testado em: 2026-01-08 18:56 - Teste final buildspec corrigido

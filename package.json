@@ -2,7 +2,7 @@
   "name": "bia",
   "version": "1.0.1",
   "description": "### Período do evento: 18 de Dezembro a 02 de Fevereiro/2025",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "test": "jest tests/unit",
     "test:integration": "jest tests/integration",
@@ -22,37 +22,20 @@
   },
   "homepage": "https://github.com/valmir2383/bia#readme",
   "dependencies": {
-    "@testing-library/jest-dom": "^5.11.4",
-    "@testing-library/react": "^11.1.0",
-    "@testing-library/user-event": "^12.1.10",
-    "aws-sdk": "^2.1691.0",
+    "@aws-sdk/client-secrets-manager": "^3.0.0",
+    "body-parser": "^1.20.2",
     "config": "^3.3.6",
     "cors": "^2.8.5",
-    "ejs": "^3.1.6",
     "express": "^4.17.1",
     "express-session": "^1.17.2",
-    "hbs": "^4.1.2",
-    "json-server": "^0.17.4",
-    "method-override": "^3.0.0",
     "morgan": "^1.10.0",
     "pg": "^8.7.1",
     "pg-hstore": "^2.3.4",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2",
-    "react-icons": "^4.2.0",
-    "react-router-dom": "^5.3.0",
-    "react-scripts": "^5.0.1",
-    "sequelize": "^6.6.5",
-    "supertest": "^6.1.6",
-    "web-vitals": "^1.0.1"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app"
-    ]
+    "sequelize": "^6.6.5"
   },
   "devDependencies": {
     "jest": "^27.5.1",
-    "sequelize-cli": "^6.2.0"
+    "sequelize-cli": "^6.2.0",
+    "supertest": "^6.1.6"
   }
 }

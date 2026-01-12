@@ -1,30 +1,68 @@
 version: 0.2
 
 phases:
+  install:
+    runtime-versions:
+      nodejs: 22
+    commands:
+      - echo "Instalando dependencias"
+      - npm install
   pre_build:
     commands:
-      - echo Fazendo login no ECR...
-      - aws --version
-      # Uso de variável de região dinâmica
-      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin 310189683227.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
-      - REPOSITORY_URI=310189683227.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/bia
+      - echo "=== OBTENDO INFORMAÇÕES AWS ==="
+      - AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-us-east-1}
+      - echo "AWS_DEFAULT_REGION: $AWS_DEFAULT_REGION"
+      - echo "AWS_ACCOUNT_ID: $AWS_ACCOUNT_ID"
+      - echo "=== CONFIGURANDO SECRETS ==="
+      - DB_SECRET_ARN="arn:aws:secretsmanager:$AWS_DEFAULT_REGION:$AWS_ACCOUNT_ID:secret:rds!db-2e2b930b-62af-4b19-82ad-6d67abd06746-E9UzKs"
+      - export DB_HOST="bia-db.c4nckw8qytev.us-east-1.rds.amazonaws.com"
+      - export DB_NAME="postgres"
+      - export DB_USER=$(aws secretsmanager get-secret-value --secret-id "$DB_SECRET_ARN" --query 'SecretString' --output text | jq -r '.username')
+      - export DB_PWD=$(aws secretsmanager get-secret-value --secret-id "$DB_SECRET_ARN" --query 'SecretString' --output text | jq -r '.password')
+      - echo "✅ Secrets configurados com sucesso"
+      - echo "=== VERIFICANDO ECR ==="
+      - |
+        # Verificar se o repositório ECR existe
+        if ! aws ecr describe-repositories --repository-names bia --region $AWS_DEFAULT_REGION 2>/dev/null; then
+          echo "Criando repositório ECR..."
+          aws ecr create-repository --repository-name bia --region $AWS_DEFAULT_REGION
+        else
+          echo "Repositório ECR já existe"
+        fi
+      - echo "=== FAZENDO LOGIN ECR ==="
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+      - REPOSITORY_URI="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/bia"
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
-      - IMAGE_TAG=${COMMIT_HASH:=latest}
+      - IMAGE_TAG=${COMMIT_HASH:-latest}
+      - echo "REPOSITORY_URI: $REPOSITORY_URI"
+      - echo "IMAGE_TAG: $IMAGE_TAG"S
+      - echo "✅ Pipeline concluído"
   build:
     commands:
-      - echo Build iniciado em `date`
-      - echo Gerando imagem da BIA...
+      - echo "=== ETAPA 1: MIGRATIONS ==="
+      - npm run db:migrate
+      - echo "✅ Migrations executadas com sucesso"
+      - echo "=== ETAPA 2: TESTES UNITÁRIOS ==="
+      - npm test
+      - echo "✅ Testes unitários aprovados"
+      - echo "=== ETAPA 3: TESTES DE INTEGRAÇÃO ==="
+      - npm run test:integration
+      - echo "✅ Testes de integração aprovados"
+      - echo "=== ETAPA 4: BUILD DA APLICAÇÃO ==="
       - docker build -t $REPOSITORY_URI:latest .
       - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
+      - echo "✅ Build da aplicação concluído"
   post_build:
     commands:
-      - echo Build finalizado com sucesso em `date`
-      - echo Fazendo push da imagem para o ECR...
+      - echo "=== ETAPA 5: DEPLOY ==="
       - docker push $REPOSITORY_URI:latest
       - docker push $REPOSITORY_URI:$IMAGE_TAG
-      - echo Gerando artefato da imagem para o ECS...
-      # Garante que o arquivo seja limpo antes de escrever
-      - printf '[{"name":"bia","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
+      - echo "✅ Deploy realizado com sucesso"
+      - echo "=== GERANDO ARTEFATOS ==="
+      - printf '[{"name":"bia-container","imageUri":"%s"}]' "$REPOSITORY_URI:$IMAGE_TAG" > imagedefinitions.json
+      - echo "✅ Artefatos gerados"
+
 artifacts:
   files: 
     - imagedefinitions.json
