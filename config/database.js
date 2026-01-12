@@ -62,7 +62,7 @@ function getRemoteDialectOptions() {
   return {
     ssl: {
       require: true,
-      rejectUnauthorized: true,
+      rejectUnauthorized: false, // Permite certificados auto-assinados
     },
   };
 }
