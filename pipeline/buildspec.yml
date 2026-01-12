@@ -36,8 +36,8 @@ phases:
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
       - IMAGE_TAG=${COMMIT_HASH:-latest}
       - echo "REPOSITORY_URI: $REPOSITORY_URI"
-      - echo "IMAGE_TAG: $IMAGE_TAG"S
-      - echo "✅ Pipeline concluído"
+      - echo "IMAGE_TAG: $IMAGE_TAG"
+      - echo "✅ Setup do pipeline concluído"
   build:
     commands:
       - echo "=== ETAPA 1: MIGRATIONS ==="
