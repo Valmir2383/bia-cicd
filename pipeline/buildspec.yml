@@ -23,7 +23,7 @@ phases:
       - IMAGE_TAG=${COMMIT_HASH:-latest}
   build:
     commands:
-      - echo "Iniciando testes e build"
+      - echo "Inicio testes e build"
       - npm run db:test
       - npm run db:migrate
       - npm test
