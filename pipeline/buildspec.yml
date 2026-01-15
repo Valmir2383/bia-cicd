@@ -23,10 +23,16 @@ phases:
       - IMAGE_TAG=${COMMIT_HASH:-latest}
   build:
     commands:
-      - echo "Iniciando testes e build"
-      - echo "Testando se o host do banco responde na porta 5432..."
-      - timeout 5s nc -zv bia-db.c4nckw8qytev.us-east-1.rds.amazonaws.com 5432
+      build:
+    commands:
+      - echo "== DIAGNÓSTICO DE ACESSO =="
+      - echo "1. Testando resolução de DNS e porta..."
+      - timeout 5s nc -zv $DB_HOST 5432
+      - echo "2. Verificando se as variáveis do Secret foram carregadas..."
+      - if [ -z "$DB_USER" ]; then echo "❌ Erro: DB_USER está vazio"; else echo "✅ DB_USER carregado"; fi
+      - echo "3. Iniciando script de teste de conexão Node.js..."
       - npm run db:test
+      - echo "== FIM DO DIAGNÓSTICO =="
       - npm run db:migrate
       - npm test
       - npm run test:integration
