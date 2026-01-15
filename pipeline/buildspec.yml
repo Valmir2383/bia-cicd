@@ -24,6 +24,8 @@ phases:
   build:
     commands:
       - echo "Iniciando testes e build"
+      - echo "Testando se o host do banco responde na porta 5432..."
+      - timeout 5s nc -zv bia-db.c4nckw8qytev.us-east-1.rds.amazonaws.com 5432
       - npm run db:test
       - npm run db:migrate
       - npm test
