@@ -10,8 +10,10 @@ phases:
       - npm install
   pre_build:
     commands:
-      - echo "Buscando credenciais no Secrets Manager..."
-      - SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id 'arn:aws:secretsmanager:us-east-1:804826263064:secret:rds!db-2e2b930b-62af-4b19-82ad-6d67abd06746-E9UzKs' --query 'SecretString' --output text)
+      - AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-us-east-1}
+      - SECRET_ID='arn:aws:secretsmanager:us-east-1:804826263064:secret:rds!db-2e2b930b-62af-4b19-82ad-6d67abd06746-E9UzKs'
+      - SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id "$SECRET_ID" --query 'SecretString' --output text)
       - export DB_USER=$(echo $SECRET_JSON | jq -r '.username')
       - export DB_PWD=$(echo $SECRET_JSON | jq -r '.password')
       - export DB_HOST="bia-db.c4nckw8qytev.us-east-1.rds.amazonaws.com"
@@ -22,16 +24,8 @@ phases:
       - IMAGE_TAG=${COMMIT_HASH:-latest}
   build:
     commands:
-      build:
-    commands:
-      - echo "== DIAGNÓSTICO DE ACESSO =="
-      - echo "1. Testando resolução de DNS e porta..."
-      - timeout 5s nc -zv $DB_HOST 5432
-      - echo "2. Verificando se as variáveis do Secret foram carregadas..."
-      - if [ -z "$DB_USER" ]; then echo "❌ Erro: DB_USER está vazio"; else echo "✅ DB_USER carregado"; fi
-      - echo "3. Iniciando script de teste de conexão Node.js..."
+      - echo "Iniciando Testes"
       - npm run db:test
-      - echo "== FIM DO DIAGNÓSTICO =="
       - npm run db:migrate
       - npm test
       - npm run test:integration
@@ -39,7 +33,6 @@ phases:
       - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
   post_build:
     commands:
-      - echo "Build finalizado"
       - docker push $REPOSITORY_URI:latest
       - docker push $REPOSITORY_URI:$IMAGE_TAG
       - printf '[{"name":"bia-container","imageUri":"%s"}]' "$REPOSITORY_URI:$IMAGE_TAG" > imagedefinitions.json
