@@ -22,14 +22,14 @@ phases:
       - IMAGE_TAG=${COMMIT_HASH:-latest}
   build:
     commands:
-      - echo "=== TESTANDO CONEXÃO DB =="
+      - echo Build started on `date`
+      - echo "=== TESTANDO CONEXÃO E MIGRATIONS ==="
       - npm run db:test
-      - echo "=== EXECUTANDO MIGRATIONS ==="
       - npm run db:migrate
       - echo "=== EXECUTANDO TESTES ==="
       - npm test
       - npm run test:integration
-      - echo "=== CONSTRUINDO IMAGEM ==="
+      - echo "=== CONSTRUINDO IMAGEM DOCKER ==="
       - docker build -t $REPOSITORY_URI:latest .
       - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
   post_build:
