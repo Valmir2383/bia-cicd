@@ -5,6 +5,8 @@ phases:
     runtime-versions:
       nodejs: 22
     commands:
+      - n 22.20.0
+      - yum install -y jq
       - npm install
   pre_build:
     commands:
@@ -15,7 +17,6 @@ phases:
       - export DB_NAME="postgres"
       - export DB_USER=$(aws secretsmanager get-secret-value --secret-id "$DB_SECRET_ARN" --query 'SecretString' --output text | jq -r '.username')
       - export DB_PWD=$(aws secretsmanager get-secret-value --secret-id "$DB_SECRET_ARN" --query 'SecretString' --output text | jq -r '.password')
-      - aws ecr describe-repositories --repository-names bia --region $AWS_DEFAULT_REGION 2>/dev/null || aws ecr create-repository --repository-name bia --region $AWS_DEFAULT_REGION
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
       - REPOSITORY_URI="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/bia"
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
@@ -23,7 +24,7 @@ phases:
   build:
     commands:
       - echo Build started on `date`
-      - echo "=== TESTANDO CONEXÃO E MIGRATIONS ==="
+      - echo "=== TESTANDO CONEXAO E MIGRATIONS ==="
       - npm run db:test
       - npm run db:migrate
       - echo "=== EXECUTANDO TESTES ==="
@@ -34,6 +35,7 @@ phases:
       - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
   post_build:
     commands:
+      - echo Build completed on `date`
       - docker push $REPOSITORY_URI:latest
       - docker push $REPOSITORY_URI:$IMAGE_TAG
       - printf '[{"name":"bia-container","imageUri":"%s"}]' "$REPOSITORY_URI:$IMAGE_TAG" > imagedefinitions.json
