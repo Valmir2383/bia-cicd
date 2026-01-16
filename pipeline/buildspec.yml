@@ -5,6 +5,8 @@ env:
     AWS_DEFAULT_REGION: us-east-1
     DB_NAME: postgres
     DB_SSL: "true"
+    # Esta variável ignora o erro de certificado SSL durante o processo de migração e testes
+    NODE_TLS_REJECT_UNAUTHORIZED: "0"
   parameter-store:
     SECRET_ARN: /bia/secrets/rds-secret-arn
     DB_HOST: /bia/db/host
@@ -34,10 +36,11 @@ phases:
       - echo "Iniciando bateria de testes..."
       - npm run lint
       - npm test
-      - echo "Testando conexão com banco..."
-      - npm run db:test || echo "⚠️ Aviso - Falha na conexão com banco (pode ser esperado se CodeBuild não está na VPC)"
-      - npm run db:migrate || echo "⚠️ Aviso - Falha nas migrações"
-      - npm run test:integration || echo "⚠️ Aviso - Falha nos testes de integração"
+      - echo "Testando conexão com banco e executando migrações..."
+      # Agora o build vai falhar de verdade se não conseguir conectar ou migrar
+      - npm run db:test
+      - npm run db:migrate
+      - npm run test:integration || echo "⚠️ Aviso - Falha nos testes de integração (verifique se o banco tem dados de teste)"
   build:
     commands:
       - echo "Testes aprovados. Gerando imagem Docker..."
@@ -48,6 +51,7 @@ phases:
       - echo "Enviando imagem para o ECR..."
       - docker push $REPOSITORY_URI:latest
       - docker push $REPOSITORY_URI:$IMAGE_TAG
+      # IMPORTANTE: Verifique se o nome do container no seu ECS Service é 'bia-container'
       - printf '[{"name":"bia-container","imageUri":"%s"}]' "$REPOSITORY_URI:$IMAGE_TAG" > imagedefinitions.json
 
 artifacts:
