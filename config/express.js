@@ -1,19 +1,19 @@
-const express = require("express");
-var cors = require("cors");
-var path = require("path");
-const config = require("config");
-var bodyParser = require("body-parser");
-const logger = require("../lib/logger");
-const errorHandler = require("../api/middleware/errorHandler");
+const express = require('express');
+const cors = require('cors');
+const path = require('path');
+const config = require('config');
+const bodyParser = require('body-parser');
+const logger = require('../lib/logger');
+const errorHandler = require('../api/middleware/errorHandler');
 
 module.exports = () => {
   const app = express();
 
   // SETANDO VARIÁVEIS DA APLICAÇÃO
-  app.set("port", process.env.PORT || config.get("server.port"));
+  app.set('port', process.env.PORT || config.get('server.port'));
 
-  //Setando react
-  app.use(express.static(path.join(__dirname, "../", "client", "build")));
+  // Setando react
+  app.use(express.static(path.join(__dirname, '../', 'client', 'build')));
 
   // parse request bodies (req.body)
   app.use(express.urlencoded({ extended: true }));
@@ -26,14 +26,14 @@ module.exports = () => {
     logger.info('Request received', {
       method: req.method,
       path: req.path,
-      ip: req.ip
+      ip: req.ip,
     });
     next();
   });
 
-  require("../api/routes/health")(app);
-  require("../api/routes/tarefas")(app);
-  require("../api/routes/versao")(app);
+  require('../api/routes/health')(app);
+  require('../api/routes/tarefas')(app);
+  require('../api/routes/versao')(app);
 
   // Error handler (deve ser o último middleware)
   app.use(errorHandler);

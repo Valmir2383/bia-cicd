@@ -1,43 +1,42 @@
 const tarefasController = require('../../../api/controllers/tarefas');
 
 // Mock do initializeDatabase
-jest.mock('../../../api/models', () => {
-  return jest.fn(() => Promise.resolve({
-    Tarefas: {
-      create: jest.fn(),
-      findAll: jest.fn(),
-      findByPk: jest.fn(),
-      update: jest.fn(),
-      destroy: jest.fn()
-    }
-  }));
-});
+jest.mock('../../../api/models', () => jest.fn(() => Promise.resolve({
+  Tarefas: {
+    create: jest.fn(),
+    findAll: jest.fn(),
+    findByPk: jest.fn(),
+    update: jest.fn(),
+    destroy: jest.fn(),
+  },
+})));
 
 describe('Tarefas Controller', () => {
-  let req, res, next, mockTarefas;
+  let req; let res; let next; let
+    mockTarefas;
 
   beforeEach(() => {
     req = {
       body: { titulo: 'Test', dia: '2024-01-01', importante: true },
-      params: { uuid: 'test-uuid' }
+      params: { uuid: 'test-uuid' },
     };
     res = {
       send: jest.fn(),
       json: jest.fn(),
-      status: jest.fn().mockReturnThis()
+      status: jest.fn().mockReturnThis(),
     };
     next = jest.fn();
-    
+
     const initializeDatabase = require('../../../api/models');
     mockTarefas = {
       create: jest.fn(),
       findAll: jest.fn(),
       findByPk: jest.fn(),
       update: jest.fn(),
-      destroy: jest.fn()
+      destroy: jest.fn(),
     };
     initializeDatabase.mockResolvedValue({ Tarefas: mockTarefas });
-    
+
     jest.clearAllMocks();
   });
 
@@ -62,7 +61,7 @@ describe('Tarefas Controller', () => {
     expect(mockTarefas.create).toHaveBeenCalledWith({
       titulo: 'Test',
       dia_atividade: '2024-01-01',
-      importante: true
+      importante: true,
     });
     expect(res.status).toHaveBeenCalledWith(201);
     expect(res.json).toHaveBeenCalledWith(mockData);

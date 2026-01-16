@@ -19,19 +19,18 @@ app.post('/api/tarefas', (req, res) => {
     uuid: 'test-uuid-123',
     titulo: req.body.titulo,
     dia_atividade: req.body.dia,
-    importante: req.body.importante
+    importante: req.body.importante,
   };
   res.json(tarefa);
 });
 
 describe('API Integration Tests', () => {
-  
   describe('GET /api/versao', () => {
     test('deve retornar versão da API', async () => {
       const response = await request(app)
         .get('/api/versao')
         .expect(200);
-      
+
       expect(response.text).toMatch(/Bia \d+\.\d+\.\d+/);
     });
   });
@@ -41,7 +40,7 @@ describe('API Integration Tests', () => {
       const response = await request(app)
         .get('/api/tarefas')
         .expect(200);
-      
+
       expect(Array.isArray(response.body)).toBe(true);
     });
   });
@@ -51,14 +50,14 @@ describe('API Integration Tests', () => {
       const novaTarefa = {
         titulo: 'Teste Integração',
         dia: '2026-01-02',
-        importante: true
+        importante: true,
       };
 
       const response = await request(app)
         .post('/api/tarefas')
         .send(novaTarefa)
         .expect(200);
-      
+
       expect(response.body.titulo).toBe(novaTarefa.titulo);
       expect(response.body.uuid).toBeDefined();
     });

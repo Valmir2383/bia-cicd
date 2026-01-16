@@ -1,5 +1,5 @@
-const initializeDatabase = require("../models");
-const logger = require("../../lib/logger");
+const initializeDatabase = require('../models');
+const logger = require('../../lib/logger');
 
 module.exports = () => {
   const controller = {};
@@ -26,14 +26,14 @@ module.exports = () => {
       const { Tarefas } = await initializeDatabase();
       const { uuid } = req.params;
       const data = await Tarefas.findByPk(uuid);
-      
+
       if (!data) {
-        return res.status(404).json({ 
+        return res.status(404).json({
           error: 'Not Found',
-          message: 'Tarefa não encontrada' 
+          message: 'Tarefa não encontrada',
         });
       }
-      
+
       res.json(data);
     } catch (error) {
       next(error);
@@ -46,14 +46,14 @@ module.exports = () => {
       const { uuid } = req.params;
 
       const deleted = await Tarefas.destroy({ where: { uuid } });
-      
+
       if (deleted === 0) {
-        return res.status(404).json({ 
+        return res.status(404).json({
           error: 'Not Found',
-          message: 'Tarefa não encontrada' 
+          message: 'Tarefa não encontrada',
         });
       }
-      
+
       logger.info('Tarefa deletada', { uuid });
       res.status(204).send();
     } catch (error) {
@@ -67,14 +67,14 @@ module.exports = () => {
       const { uuid } = req.params;
 
       const [updated] = await Tarefas.update(req.body, { where: { uuid } });
-      
+
       if (updated === 0) {
-        return res.status(404).json({ 
+        return res.status(404).json({
           error: 'Not Found',
-          message: 'Tarefa não encontrada' 
+          message: 'Tarefa não encontrada',
         });
       }
-      
+
       const data = await Tarefas.findByPk(uuid);
       logger.info('Tarefa atualizada', { uuid });
       res.json(data);
@@ -92,6 +92,6 @@ module.exports = () => {
       next(error);
     }
   };
-  
+
   return controller;
 };

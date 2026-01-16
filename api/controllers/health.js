@@ -1,4 +1,4 @@
-const initializeDatabase = require("../models");
+const initializeDatabase = require('../models');
 
 module.exports = () => {
   const controller = {};
@@ -8,7 +8,7 @@ module.exports = () => {
       status: 'healthy',
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
-      database: 'unknown'
+      database: 'unknown',
     };
 
     try {
