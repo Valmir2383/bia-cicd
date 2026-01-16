@@ -10,7 +10,7 @@ RUN npm ci --only=production --loglevel=error
 # Instalar e buildar frontend
 COPY client/package*.json ./client/
 COPY client/.env ./client/
-RUN cd client && npm ci --loglevel=error
+RUN cd client && npm install --loglevel=error
 
 COPY . .
 ENV NODE_OPTIONS=--openssl-legacy-provider
