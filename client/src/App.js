@@ -100,7 +100,7 @@ function App() {
                   onToggle={toggleReminder}
                 />
               ) : (
-                "Rumo ao Proximo nível"
+                "ver api rodando"
               )}
             </>
           )}
