@@ -10,6 +10,7 @@ phases:
       - npm install
   pre_build:
     commands:
+      # --- Configurações de Ambiente ---
       - AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
       - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-us-east-1}
       - SECRET_ID='arn:aws:secretsmanager:us-east-1:804826263064:secret:rds!db-2e2b930b-62af-4b19-82ad-6d67abd06746-E9UzKs'
@@ -22,17 +23,21 @@ phases:
       - REPOSITORY_URI="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/bia"
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
       - IMAGE_TAG=${COMMIT_HASH:-latest}
-  build:
-    commands:
-      - echo "Iniciando Testes"
+      
+      # --- Validação e Testes (Movidos para cá) ---
+      - echo "Iniciando bateria de testes..."
       - npm run db:test
       - npm run db:migrate
       - npm test
       - npm run test:integration
+  build:
+    commands:
+      - echo "Testes aprovados. Gerando imagem Docker..."
       - docker build -t $REPOSITORY_URI:latest .
       - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
   post_build:
     commands:
+      - echo "Enviando imagem para o ECR..."
       - docker push $REPOSITORY_URI:latest
       - docker push $REPOSITORY_URI:$IMAGE_TAG
       - printf '[{"name":"bia-container","imageUri":"%s"}]' "$REPOSITORY_URI:$IMAGE_TAG" > imagedefinitions.json
