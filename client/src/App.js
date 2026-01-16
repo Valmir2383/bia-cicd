@@ -100,7 +100,7 @@ function App() {
                   onToggle={toggleReminder}
                 />
               ) : (
-                "ver api rodando"
+                "ver api rodando teste"
               )}
             </>
           )}
