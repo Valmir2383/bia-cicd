@@ -1,4 +1,7 @@
 // Este formato é o padrão exigido pelo Sequelize CLI
+const fs = require('fs');
+const path = require('path');
+
 const config = {
   username: process.env.DB_USER || "postgres",
   password: process.env.DB_PWD || "postgres",
@@ -8,9 +11,10 @@ const config = {
   dialect: "postgres",
   logging: false,
   dialectOptions: {
-    ssl: {
+    ssl: process.env.DB_SSL === 'false' ? false : {
       require: true,
-      rejectUnauthorized: false
+      rejectUnauthorized: true,
+      ca: process.env.RDS_CA_CERT ? fs.readFileSync(process.env.RDS_CA_CERT) : undefined
     }
   }
 };

@@ -1,16 +1,33 @@
 version: 0.2
 
+env:
+  variables:
+    AWS_DEFAULT_REGION: us-east-1
+    DB_NAME: postgres
+    DB_SSL: "false"
+  parameter-store:
+    SECRET_ARN: /bia/secrets/rds-secret-arn
+    DB_HOST: /bia/db/host
+
 phases:
   install:
+    runtime-versions:
+      nodejs: 22
     commands:
-      - echo Installing Node 24 e npm...
-      - curl -fsSL https://rpm.nodesource.com/setup_24.x | sudo bash -
-      - sudo yum install -y nodejs
+      - n 22.20.0
+      - yum install -y jq
+      - npm install
+  pre_build:
+    commands:
+      - SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id "$SECRET_ARN" --query 'SecretString' --output text)
+      - export DB_USER=$(echo $SECRET_JSON | jq -r '.username')
+      - export DB_PWD=$(echo $SECRET_JSON | jq -r '.password')
+      - echo "Executando validações de PR..."
+      - npm run lint
+      - npm run db:test
+      - npm test
+      - npm run test:integration
   build:
     commands:
-      - npm install --loglevel=error
-      - REACT_APP_API_URL=http://localhost:3001 SKIP_PREFLIGHT_CHECK=true npm run build --prefix client
-      - echo Rodando testes unitários e de integração...
-      - npm test
-      - echo "# trigger build" >> pipeline/buildspec-pr.yml    
+      - echo "✅ Todas as validações passaram!"    
 
