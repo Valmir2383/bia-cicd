@@ -27,6 +27,7 @@ phases:
       - SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id "$SECRET_ARN" --query 'SecretString' --output text)
       - export DB_USER=$(echo $SECRET_JSON | jq -r '.username')
       - export DB_PWD=$(echo $SECRET_JSON | jq -r '.password')
+      - echo "REACT_APP_API_URL=http://bia-alb-260633202.us-east-1.elb.amazonaws.com" > .env
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
       - REPOSITORY_URI="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${ECR_REPOSITORY:-bia}"
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
@@ -34,7 +35,7 @@ phases:
       
       # --- Validação e Testes ---
       - echo "Iniciando bateria de testes..."
-      - npm run lint
+      - npm run lint -- --fix
       - npm test
       - echo "Testando conexão com banco e executando migrações..."
       # Agora o build vai falhar de verdade se não conseguir conectar ou migrar
