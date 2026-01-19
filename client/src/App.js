@@ -100,7 +100,7 @@ function App() {
                   onToggle={toggleReminder}
                 />
               ) : (
-                "ver api rodando teste novamente"
+                "Por favor atualize seus desafios aqui"
               )}
             </>
           )}
