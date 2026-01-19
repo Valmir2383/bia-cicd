@@ -81,7 +81,7 @@ echo ""
 echo "Aguarde 2 minutos para SSM agent ficar online"
 
 
-Para usar:
-bash
-chmod +x 07-criar-porteiro-zona-b.sh
-./07-criar-porteiro-zona-b.sh
+#Para usar:
+#bash
+#chmod +x 07-criar-porteiro-zona-b.sh
+#./07-criar-porteiro-zona-b.sh
