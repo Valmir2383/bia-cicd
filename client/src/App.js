@@ -5,7 +5,7 @@ import Footer from "./components/Footer";
 import Tasks from "./components/Tasks";
 import AddTask from "./components/AddTask";
 import About from "./components/About";
-const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:8080";
+const apiUrl = process.env.REACT_APP_API_URL || 'http://bia-alb-260633202.us-east-1.elb.amazonaws.com';
 
 function App() {
   const [showAddTask, setShowAddTask] = useState(false);
