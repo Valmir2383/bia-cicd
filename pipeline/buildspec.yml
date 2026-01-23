@@ -34,7 +34,7 @@ phases:
       - IMAGE_TAG=${COMMIT_HASH:-latest}
       
       # --- Validação e Testes ---
-      - echo "Iniciando bateria de testes..."
+      - echo "Iniciando VALIDAÇÃO de testes..."
       - npm run lint -- --fix
       - npm test
       - echo "Testando conexão com banco e executando migrações..."
