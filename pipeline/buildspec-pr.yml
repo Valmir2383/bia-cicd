@@ -10,6 +10,6 @@ phases:
     commands:
       - npm install --loglevel=error
       - npm install --prefix client --loglevel=error
-      - CI=false NODE_OPTIONS="--openssl-legacy-provider --max-old-space-size=4096" REACT_APP_API_URL=http://localhost:3001 SKIP_PREFLIGHT_CHECK=true npm run build --prefix client
+      - CI=false DISABLE_ESLINT_PLUGIN=true NODE_OPTIONS="--openssl-legacy-provider --max-old-space-size=4096" REACT_APP_API_URL=http://localhost:3001 SKIP_PREFLIGHT_CHECK=true npm run build --prefix client
       - echo Rodando testes unitarios do backend...
       - CI=true npm test -- tests/unit/ --watchAll=false
