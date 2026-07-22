@@ -9,6 +9,7 @@ phases:
   build:
     commands:
       - npm install --loglevel=error
+      - npm install --prefix client --loglevel=error
       - REACT_APP_API_URL=http://localhost:3001 SKIP_PREFLIGHT_CHECK=true npm run build --prefix client
       - echo Rodando testes unitários
       - npm test
