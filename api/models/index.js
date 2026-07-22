@@ -4,32 +4,44 @@ const fs = require("fs");
 const path = require("path");
 const Sequelize = require("sequelize");
 const basename = path.basename(__filename);
-const config = require("../../config/database.js");
 
 const db = {};
-const sequelize = new Sequelize(config);
+let sequelize;
 
-fs.readdirSync(__dirname)
-  .filter((file) => {
-    return (
-      file.indexOf(".") !== 0 && file !== basename && file.slice(-3) === ".js"
-    );
-  })
-  .forEach((file) => {
-    const model = require(path.join(__dirname, file))(
-      sequelize,
-      Sequelize.DataTypes
-    );
-    db[model.name] = model;
+// Função para inicializar o Sequelize de forma assíncrona
+async function initializeDatabase() {
+  if (sequelize) return db;
+  
+  const getDbConfig = require("../../config/database.js");
+  const config = await getDbConfig();
+  
+  sequelize = new Sequelize(config);
+  
+  fs.readdirSync(__dirname)
+    .filter((file) => {
+      return (
+        file.indexOf(".") !== 0 && file !== basename && file.slice(-3) === ".js"
+      );
+    })
+    .forEach((file) => {
+      const model = require(path.join(__dirname, file))(
+        sequelize,
+        Sequelize.DataTypes
+      );
+      db[model.name] = model;
+    });
+
+  Object.keys(db).forEach((modelName) => {
+    if (db[modelName].associate) {
+      db[modelName].associate(db);
+    }
   });
 
-Object.keys(db).forEach((modelName) => {
-  if (db[modelName].associate) {
-    db[modelName].associate(db);
-  }
-});
+  db.sequelize = sequelize;
+  db.Sequelize = Sequelize;
+  
+  return db;
+}
 
-db.sequelize = sequelize;
-db.Sequelize = Sequelize;
-
-module.exports = db;
+// Para compatibilidade, exportar uma função que inicializa o banco
+module.exports = initializeDatabase;
