@@ -1,6 +1,7 @@
 # bia-cicd
 
 Aplicação BIA com pipeline CI/CD integrado ao AWS CodeBuild.
+Code Pipeline + Nat Gateway + Secrets Manager
 
 ## Funcionalidades
 - API REST para gerenciamento de tarefas
@@ -18,4 +19,4 @@ npm start           # Iniciar aplicação
 ```
 
 ## Status
-Pipeline testado em: 2026-01-08 18:56 - Teste final buildspec corrigido
+Pipeline testado em: 2026-07-20 18:56 - Teste final validação
